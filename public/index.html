@@ -328,7 +328,8 @@
 <script>
 const SUPABASE_URL      = 'https://qbwcheremnwvrjpmtmfx.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFid2NoZXJlbW53dnJqcG10bWZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTM1ODAsImV4cCI6MjA5MDk2OTU4MH0.ChoOM497NqKDnipGsZNPRt8GfCx1N6NGcZ1WK2nRRX0';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window._sbClient = window._sbClient || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window._sbClient;
 const BACKEND = "";
 
 let currentUser = null;
@@ -371,7 +372,7 @@ async function doSignIn() {
   const btn = document.getElementById('signin-btn');
   btn.disabled = true; btn.textContent = 'Signing in...';
   clearAuthMsg();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
   btn.disabled = false; btn.textContent = 'Sign In';
   if (error) { showAuthError(error.message); return; }
   // onAuthStateChange will handle the rest
@@ -385,7 +386,7 @@ async function doSignUp() {
   const btn = document.getElementById('signup-btn');
   btn.disabled = true; btn.textContent = 'Creating account...';
   clearAuthMsg();
-  const { error } = await supabase.auth.signUp({ email, password });
+  const { error } = await supabaseClient.auth.signUp({ email, password });
   btn.disabled = false; btn.textContent = 'Create Account';
   if (error) { showAuthError(error.message); return; }
   showAuthSuccess('Account created! You are now signed in.');
@@ -393,11 +394,11 @@ async function doSignUp() {
 }
 
 async function doSignOut() {
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut();
 }
 
 // Listen for auth state changes
-supabase.auth.onAuthStateChange((event, session) => {
+supabaseClient.auth.onAuthStateChange((event, session) => {
   if (session?.user) {
     currentUser = session.user;
     showApp(session.user);
@@ -408,7 +409,7 @@ supabase.auth.onAuthStateChange((event, session) => {
 });
 
 // Check existing session on load
-supabase.auth.getSession().then(({ data }) => {
+supabaseClient.auth.getSession().then(({ data }) => {
   if (data?.session?.user) {
     currentUser = data.session.user;
     showApp(data.session.user);
@@ -626,7 +627,7 @@ async function sendMsg() {
   isStreaming = true;
   addTyping();
 
-  const { data: sessionData } = await supabase.auth.getSession();
+  const { data: sessionData } = await supabaseClient.auth.getSession();
   const token = sessionData?.session?.access_token || '';
 
   try {
